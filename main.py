@@ -12,14 +12,18 @@ API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
 
 GET_FIGHT = True
+FIGHT_RE = re.compile(
+    r'You met some hostile creatures\. Be careful:\n'
+    r'((.|\n)+)'
+    r'\n'
+    r'/fight_\w+'
+)
+MONSTERS_RE = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)\n( {2}╰ .+\n)?')
 
 with TelegramClient('anon', API_ID, API_HASH) as client:
     @client.on(events.NewMessage(
         incoming=True,
-        pattern=r'You met some hostile creatures\. Be careful:\n'
-                r'((.|\n)+)'
-                r'\n'
-                r'/fight_\w+'
+        pattern=FIGHT_RE
     ))
     async def fight_handler(event):
         global GET_FIGHT
@@ -30,11 +34,10 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
         GET_FIGHT = False
 
         forward = event.forward
-        regex = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)\n( {2}╰ .+\n)?')
         monsters = event.pattern_match.group(1)
     
-        m = min(map(lambda l: int(l.group(3)), re.finditer(regex, monsters)))
-        s = sum(map(lambda l: int(l.group(1)) if l.group(1) else 1, re.finditer(regex, monsters)))
+        m = min(map(lambda l: int(l.group(3)), re.finditer(MONSTERS_RE, monsters)))
+        s = sum(map(lambda l: int(l.group(1)) if l.group(1) else 1, re.finditer(MONSTERS_RE, monsters)))
     
         if s == 1 and 32 <= m <= 50:
             await event.forward_to('chtwrsbot')
