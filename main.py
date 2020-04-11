@@ -25,11 +25,23 @@ GET_FIGHT = True
 def send(min_level, amount, monsters):
     m, s = min_level, amount
 
-    return m >= 33 and (
-        s == 1 and m <= 50 or 
-        s == 2 and m <= 35 or
-        s == 0 and m <= 35
-    )
+    bears = monsters['Bear']
+    wolves = monsters['Wolf']
+    boars = monsters['Boar']
+    knights = monsters['Knight']
+    beasts = bears or wolves or boars
+
+    if s == 1:
+        return not bears and m <= 55 or m <= 50
+
+    if s == 2:
+        if beasts:
+            return not bears and m <= 38 or bears == 1 and m <= 36
+        else:
+            return not knights and m <= 46 or knights == 1 and m <= 40 or m <= 37
+
+    if s == 3:
+        return not beasts and (not knights and m <= 36 or m == 34)
 
 with TelegramClient('anon', API_ID, API_HASH) as client:
     @client.on(events.NewMessage(
@@ -51,7 +63,7 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
         s = 0    # Monsters total amount
 
         for l in re.finditer(MONSTERS_RE, monsters_raw):
-            amount = int(l.group(1)) or 1
+            amount = int(l.group(1) or 1)
             monster = l.group(2)
             level = int(l.group(3))
 
