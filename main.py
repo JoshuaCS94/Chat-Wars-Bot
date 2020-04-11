@@ -11,7 +11,6 @@ logging.basicConfig(format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s'
 API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
 
-GET_FIGHT = True
 FIGHT_RE = re.compile(
     r'You met some hostile creatures\. Be careful:\n'
     r'((.|\n)+)'
@@ -19,9 +18,12 @@ FIGHT_RE = re.compile(
     r'/fight_\w+'
 )
 MONSTERS_RE = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)\n( {2}╰ .+\n)?')
+MONSTERS_TYPES = ['Collector', 'Sentinel', 'Alchemist', 'Ranger', 'Blacksmith', 'Knight', 'Boar', 'Wolf', 'Bear']
 
-def send(monsters):
-    m, s = monsters
+GET_FIGHT = True
+
+def send(min_level, amount, monsters):
+    m, s = min_level, amount
 
     return m >= 33 and (
         s == 1 and m <= 50 or 
@@ -44,16 +46,20 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
 
         monsters_raw = event.pattern_match.group(1)
 
+        monsters = {m: 0 for m in MONSTERS_TYPES}
         m = 100  # Monsters minimum level
         s = 0    # Monsters total amount
 
         for l in re.finditer(MONSTERS_RE, monsters_raw):
-            m = min(m, int(l.group(3)))
-            s += int(l.group(1)) or 1
-    
-        monsters = m, s
+            amount = int(l.group(1)) or 1
+            monster = l.group(2)
+            level = int(l.group(3))
 
-        if send(monsters):
+            m = min(m, level)
+            s += amount
+            monsters[monster] = amount
+
+        if send(m, s, monsters):
             await event.forward_to('chtwrsbot')
             print('sending fight of %d' % s)
             # await asyncio.sleep(1000)
