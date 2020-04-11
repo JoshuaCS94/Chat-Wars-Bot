@@ -31,6 +31,9 @@ def send(min_level, amount, monsters):
     knights = monsters['Knight']
     beasts = bears or wolves or boars
 
+    if m < 34:
+        return False
+
     if s == 1:
         return not bears and m <= 55 or m <= 50
 
