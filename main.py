@@ -20,6 +20,15 @@ FIGHT_RE = re.compile(
 )
 MONSTERS_RE = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)\n( {2}╰ .+\n)?')
 
+def send(monsters):
+    m, s = monsters
+
+    return m >= 33 and (
+        s == 1 and m <= 50 or 
+        s == 2 and m <= 35 or
+        s == 0 and m <= 35
+    )
+
 with TelegramClient('anon', API_ID, API_HASH) as client:
     @client.on(events.NewMessage(
         incoming=True,
@@ -33,27 +42,21 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
             
         GET_FIGHT = False
 
-        forward = event.forward
-        monsters = event.pattern_match.group(1)
-        m = 100  # Monsters minimum level
-        s = 0
+        monsters_raw = event.pattern_match.group(1)
 
-        for l in re.finditer(MONSTERS_RE, monsters):
+        m = 100  # Monsters minimum level
+        s = 0    # Monsters total amount
+
+        for l in re.finditer(MONSTERS_RE, monsters_raw):
             m = min(m, int(l.group(3)))
             s += int(l.group(1)) or 1
     
-        if s == 1 and 32 <= m <= 50:
+        monsters = m, s
+
+        if send(monsters):
             await event.forward_to('chtwrsbot')
-            print('sending fight of 1')
-            # await asyncio.sleep(500)
-        if s == 2 and 32 <= m <= 35:
-            await event.forward_to('chtwrsbot')
-            print('sending fight of 2')
+            print('sending fight of %d' % s)
             # await asyncio.sleep(1000)
-        if s == 30 and 31 <= m <= 33:
-            await event.forward_to('chtwrsbot')
-            print('sending fight of 3')
-            # await asyncio.sleep(500)
 
         GET_FIGHT = True
        
