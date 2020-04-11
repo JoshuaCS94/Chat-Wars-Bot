@@ -35,8 +35,11 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
 
         forward = event.forward
         monsters = event.pattern_match.group(1)
+        m = 100  # Monsters minimum level
+
+        for line in re.finditer(MONSTERS_RE, monsters):
+            m = min(m, int(line.group(3)))
     
-        m = min(map(lambda l: int(l.group(3)), re.finditer(MONSTERS_RE, monsters)))
         s = sum(map(lambda l: int(l.group(1)) if l.group(1) else 1, re.finditer(MONSTERS_RE, monsters)))
     
         if s == 1 and 32 <= m <= 50:
