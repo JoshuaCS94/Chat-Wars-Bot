@@ -2,6 +2,8 @@ import os
 import asyncio
 import logging
 import re
+from dotenv import load_dotenv
+load_dotenv()
 
 from telethon import TelegramClient, events
 from telethon.events.newmessage import NewMessage
