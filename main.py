@@ -51,6 +51,22 @@ def send(min_level, amount, monsters):
     if s == 3:
         return not beasts and (not knights and m <= 36 or m == 34)
 
+def process_monsters(monsters_raw):
+    monsters = {m: 0 for m in MONSTERS_TYPES}
+    m = 100  # Monsters minimum level
+    s = 0    # Monsters total amount
+
+    for l in re.finditer(MONSTERS_RE, monsters_raw):
+        amount = int(l.group(1) or 1)
+        monster = l.group(2)
+        level = int(l.group(3))
+
+        m = min(m, level)
+        s += amount
+        monsters[monster] = amount
+
+    return m, s, monsters
+
 with TelegramClient('anon', API_ID, API_HASH) as client:
     @client.on(events.NewMessage(
         incoming=True,
@@ -71,20 +87,7 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
             
         GET_FIGHT = False
 
-        monsters_raw = event.pattern_match.group(1)
-
-        monsters = {m: 0 for m in MONSTERS_TYPES}
-        m = 100  # Monsters minimum level
-        s = 0    # Monsters total amount
-
-        for l in re.finditer(MONSTERS_RE, monsters_raw):
-            amount = int(l.group(1) or 1)
-            monster = l.group(2)
-            level = int(l.group(3))
-
-            m = min(m, level)
-            s += amount
-            monsters[monster] = amount
+        m, s, monsters = process_monsters(event.pattern_match.group(1))
 
         if send(m, s, monsters):
             await event.forward_to('chtwrsbot')
