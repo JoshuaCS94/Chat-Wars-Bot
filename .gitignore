@@ -111,3 +111,4 @@ run/
 
 # Telethon local DB
 *.session
+*.session-journal
