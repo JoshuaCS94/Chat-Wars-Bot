@@ -22,7 +22,8 @@ FIGHT_RE_BOTATO = re.compile(
     r'\n'
     r'((.|\n)+)'
 )
-MONSTERS_RE = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)\n( {2}╰ .+\n)?')
+SHARE_FIGHT_RE = re.compile(r'https://t\.me/share/url\?url=(/fight_.+)')
+MONSTERS_RE = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)(\n {2}╰ .+\n)?\n?')
 MONSTERS_TYPES = ['Collector', 'Sentinel', 'Alchemist', 'Ranger', 'Blacksmith', 'Knight', 'Boar', 'Wolf', 'Bear']
 
 GET_FIGHT = True
@@ -73,7 +74,23 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
         pattern=FIGHT_RE_BOTATO
     ))
     async def fight_handler_botato(event):
-        print('Got fight from Botato')
+        global GET_FIGHT
+        
+        if not GET_FIGHT or not event.buttons:
+            return
+            
+        GET_FIGHT = False
+
+        monsters_raw = event.pattern_match.group(1)
+        m, s, monsters = process_monsters(monsters_raw)
+        url = re.match(SHARE_FIGHT_RE, event.buttons[0][0].url).group(1)
+
+        if send(m, s, monsters):
+            await client.send_message('chtwrsbot', '%s\n%s' % (monsters_raw, url))
+            print('sending fight of %d' % s)
+            # await asyncio.sleep(1000)
+
+        GET_FIGHT = True
 
     @client.on(events.NewMessage(
         incoming=True,
