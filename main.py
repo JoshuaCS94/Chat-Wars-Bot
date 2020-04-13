@@ -17,6 +17,11 @@ FIGHT_RE = re.compile(
     r'\n'
     r'/fight_\w+'
 )
+FIGHT_RE_BOTATO = re.compile(
+    r'.* has found some monsters:\n'
+    r'\n'
+    r'((.|\n)+)'
+)
 MONSTERS_RE = re.compile(r'(?:(\d) x )?\w+ (\w+) lvl\.(\d+)\n( {2}╰ .+\n)?')
 MONSTERS_TYPES = ['Collector', 'Sentinel', 'Alchemist', 'Ranger', 'Blacksmith', 'Knight', 'Boar', 'Wolf', 'Bear']
 
@@ -47,6 +52,13 @@ def send(min_level, amount, monsters):
         return not beasts and (not knights and m <= 36 or m == 34)
 
 with TelegramClient('anon', API_ID, API_HASH) as client:
+    @client.on(events.NewMessage(
+        incoming=True,
+        pattern=FIGHT_RE_BOTATO
+    ))
+    async def fight_handler_botato(event):
+        print('Got fight from Botato')
+
     @client.on(events.NewMessage(
         incoming=True,
         pattern=FIGHT_RE
