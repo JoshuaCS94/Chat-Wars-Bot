@@ -107,7 +107,7 @@ with TelegramClient('anon', API_ID, API_HASH) as client:
 
         logging.info('Foray stopped!')
         await asyncio.sleep(random.randint(10, 100))
-        event.buttons[0][0].click()
+        await event.buttons[0][0].click()
 
     @client.on(events.NewMessage(chats=CW_BOT_ID, pattern=PLAYER_RE, incoming=True))
     async def level(event):
